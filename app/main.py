@@ -1,19 +1,25 @@
 from fastapi import FastAPI
-from app.routes import auth_router
+from fastapi.security import HTTPBearer
+from app.routes import auth_router, google_drive_router
+
+security = HTTPBearer()
 
 app = FastAPI(
     title="Google OAuth Authentication API",
     description="API for Google OAuth authentication with JWT token generation",
-    version="1.0.0"
+    version="1.0.0",
+    swagger_ui_init_oauth={
+        "usePkceWithAuthorizationCodeGrant": True,
+    }
 )
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(google_drive_router)
 
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
     return {
         "message": "Google OAuth Authentication API",
         "endpoints": {

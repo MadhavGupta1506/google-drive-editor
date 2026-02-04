@@ -9,58 +9,44 @@ from app.utils import (
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+google_tokens_store = {}
 
 
 @router.get("/login/google", response_model=LoginURLResponse)
 async def login_google():
-    """
-    Generate Google OAuth login URL
-    
-    Returns:
-        Dictionary containing the Google OAuth authorization URL
-    """
     auth_data = get_google_auth_url()
     return {"url": auth_data["url"]}
 
 
 @router.get("/google/callback")
 async def auth_google_callback(code: str, state: Optional[str] = None):
-    """
-    Handle Google OAuth callback
-    
-    Args:
-        code: Authorization code from Google
-        state: State parameter for CSRF protection
-        
-    Returns:
-        JWT token for the authenticated user
-    """
-    # Exchange code for access token
+
     token_data = exchange_code_for_token(code)
-    
+
     if not token_data:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to get access token from Google"
-        )
-    
+        raise HTTPException(status_code=400, detail="Failed to get access token")
+
     access_token = token_data["access_token"]
-    
-    # Get user information
+    refresh_token = token_data.get("refresh_token")
+
     user_data = get_user_info(access_token)
-    
-    if not user_data:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to fetch user info from Google"
-        )
-    
-    # Create JWT token
+
+    if not user_data or "email" not in user_data:
+        raise HTTPException(status_code=400, detail="Failed to fetch user info")
+
+    email = user_data["email"]
+    print(refresh_token)
+    if refresh_token:
+        google_tokens_store[email] = {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+
     app_jwt = create_jwt_token({
-        "email": user_data["email"],
+        "email": email,
         "provider": "google"
     })
-    
+
     return TokenResponse(
         access_token=app_jwt,
         token_type="bearer"

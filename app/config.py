@@ -5,7 +5,6 @@ load_dotenv()
 
 
 class Settings:
-    """Application settings"""
     
     # Google OAuth
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")

@@ -5,15 +5,6 @@ from app.config import settings
 
 
 def create_jwt_token(data: dict) -> str:
-    """
-    Create a JWT token with expiration
-    
-    Args:
-        data: Dictionary containing the payload data
-        
-    Returns:
-        Encoded JWT token as string
-    """
     payload = data.copy()
     payload.update({
         "iat": datetime.utcnow(),
@@ -23,15 +14,6 @@ def create_jwt_token(data: dict) -> str:
 
 
 def verify_jwt_token(token: str) -> Optional[Dict]:
-    """
-    Verify and decode a JWT token
-    
-    Args:
-        token: JWT token string
-        
-    Returns:
-        Decoded payload if valid, None otherwise
-    """
     try:
         payload = jwt.decode(
             token, 
