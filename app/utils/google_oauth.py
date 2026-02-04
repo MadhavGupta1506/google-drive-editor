@@ -1,3 +1,4 @@
+import json
 import secrets
 import requests
 from urllib.parse import quote_plus
@@ -43,7 +44,6 @@ def exchange_code_for_token(code: str) -> Optional[Dict]:
             timeout=10
         )
         token_data = response.json()
-        
         if "access_token" in token_data:
             return token_data
         return None
@@ -59,7 +59,6 @@ def get_user_info(access_token: str) -> Optional[Dict]:
             timeout=10
         )
         user_data = response.json()
-        
         if "email" in user_data:
             return user_data
         return None
@@ -89,12 +88,53 @@ def refresh_google_access_token(refresh_token: str) -> Optional[Dict]:
 def list_drive_files(access_token: str) -> Optional[Dict]:
     try:
         response = requests.get(
-            "https://www.googleapis.com/drive/v3/files",
+            settings.GOOGLE_DRIVE_API_URL,
             headers={"Authorization": f"Bearer {access_token}"},
             params={
                 "pageSize": 10,
                 "fields": "files(id,name,mimeType)"
             },
+            timeout=10
+        )
+        return response.json()
+    except requests.RequestException:
+        return None
+
+def upload_file_to_drive(access_token: str, file_name: str, file_bytes: bytes, mime_type: str,parent_folder_id: str | None = None) -> Optional[Dict]:
+    try:
+        metadata = {
+            'name': file_name
+        }
+        if parent_folder_id:
+            metadata["parents"] = [parent_folder_id]
+        files = {
+            'data': ('metadata', json.dumps(metadata), 'application/json'),
+            'file': (file_name, file_bytes, mime_type)
+        }
+        response = requests.post(
+            settings.GOOGLE_DRIVE_API_URL + "?uploadType=multipart",
+            headers={"Authorization": f"Bearer {access_token}"},
+            files=files,
+            timeout=10
+        )
+        return response.json()
+    except requests.RequestException:
+        return None
+    
+def create_drive_folder(access_token: str, folder_name: str, parent_id: str | None = None):
+    metadata = {
+        'name': folder_name,
+        'mimeType': 'application/vnd.google-apps.folder'}
+    if parent_id:
+        metadata["parents"] = [parent_id]
+    try:
+        response = requests.post(
+            settings.GOOGLE_DRIVE_API_URL,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            },
+            json=metadata,
             timeout=10
         )
         return response.json()

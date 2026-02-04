@@ -21,12 +21,13 @@ class Settings:
     GOOGLE_TOKEN_URL: str = "https://accounts.google.com/o/oauth2/token"
     GOOGLE_USERINFO_URL: str = "https://www.googleapis.com/oauth2/v1/userinfo"
     
+    GOOGLE_DRIVE_API_URL: str = "https://www.googleapis.com/drive/v3/files"
     # OAuth Scopes
     GOOGLE_SCOPES: list = [
         "openid",
         "email",
         "profile",
-        "https://www.googleapis.com/auth/drive.readonly"
+        "https://www.googleapis.com/auth/drive"
     ]
 
 

@@ -35,7 +35,6 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
         raise HTTPException(status_code=400, detail="Failed to fetch user info")
 
     email = user_data["email"]
-    print(refresh_token)
     if refresh_token:
         google_tokens_store[email] = {
             "access_token": access_token,
