@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, requests, requests
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.utils.google_photos import list_albums, list_google_photos, create_album
+from app.utils.google_photos import list_albums, list_google_photos, create_album, upload_photo_to_album
 from app.utils.jwt_utils import verify_jwt_token
 from app.utils.google_oauth import refresh_google_access_token
-from app.routes.auth import google_tokens_store
+from app.utils.token_storage import get_user_tokens, update_user_access_token, user_has_tokens
 from pydantic import BaseModel
+from typing import Optional
 import httpx
 
 
@@ -25,12 +26,13 @@ async def get_albums(credentials: HTTPAuthorizationCredentials = Depends(securit
             raise HTTPException(status_code=401, detail="Email not found in token")
         
         # Check if Google tokens exist
-        if email not in google_tokens_store:
+        if not user_has_tokens(email):
             raise HTTPException(status_code=403, detail="Google Photos not linked. Please authenticate first.")
         
         # Get tokens
-        access_token = google_tokens_store[email]["access_token"]
-        refresh_token = google_tokens_store[email]["refresh_token"]
+        tokens = get_user_tokens(email)
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
         # Call Google Photos API
         print(f"Using access token: {access_token}")  
         albums_data = list_albums(access_token)
@@ -43,7 +45,7 @@ async def get_albums(credentials: HTTPAuthorizationCredentials = Depends(securit
                     raise HTTPException(status_code=401, detail="Failed to refresh access token. Please re-authenticate.")
                 
                 access_token = new_token["access_token"]
-                google_tokens_store[email]["access_token"] = access_token
+                update_user_access_token(email, access_token)
                 albums_data = list_albums(access_token)
                 
                 # If still error after refresh
@@ -75,11 +77,12 @@ async def get_photos(credentials: HTTPAuthorizationCredentials = Depends(securit
         if not email:
             raise HTTPException(status_code=401, detail="Email not found in token")
         
-        if email not in google_tokens_store:
+        if not user_has_tokens(email):
             raise HTTPException(status_code=403, detail="Google Photos not linked. Please authenticate first.")
         
-        access_token = google_tokens_store[email]["access_token"]
-        refresh_token = google_tokens_store[email]["refresh_token"]
+        tokens = get_user_tokens(email)
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
         
         photos_data = list_google_photos(access_token)
         
@@ -90,7 +93,7 @@ async def get_photos(credentials: HTTPAuthorizationCredentials = Depends(securit
                     raise HTTPException(status_code=401, detail="Failed to refresh access token. Please re-authenticate.")
                 
                 access_token = new_token["access_token"]
-                google_tokens_store[email]["access_token"] = access_token
+                update_user_access_token(email, access_token)
                 photos_data = list_google_photos(access_token)
                 
                 if "error" in photos_data:
@@ -127,11 +130,12 @@ async def create_new_album(
         if not email:
             raise HTTPException(status_code=401, detail="Email not found in token")
         
-        if email not in google_tokens_store:
+        if not user_has_tokens(email):
             raise HTTPException(status_code=403, detail="Google Photos not linked. Please authenticate first.")
         
-        access_token = google_tokens_store[email]["access_token"]
-        refresh_token = google_tokens_store[email]["refresh_token"]
+        tokens = get_user_tokens(email)
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
         
         album_data = create_album(access_token, album_request.album_title, refresh_token, email)
         
@@ -144,5 +148,53 @@ async def create_new_album(
         raise
     except KeyError as e:
         raise HTTPException(status_code=500, detail=f"Missing token data: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/upload")
+async def upload_photo(
+    file: UploadFile = File(...),
+    album_id: Optional[str] = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Upload a photo to Google Photos, optionally to a specific album"""
+    try:
+        payload = verify_jwt_token(credentials.credentials)
+        
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid or expired JWT token")
+        
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(status_code=401, detail="Email not found in token")
+        
+        if not user_has_tokens(email):
+            raise HTTPException(status_code=403, detail="Google Photos not linked. Please authenticate first.")
+        
+        tokens = get_user_tokens(email)
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
+        
+        # Read file bytes
+        photo_bytes = await file.read()
+        
+        # Upload photo
+        result = upload_photo_to_album(
+            access_token=access_token,
+            photo_bytes=photo_bytes,
+            filename=file.filename,
+            album_id=album_id,
+            refresh_token=refresh_token,
+            email=email
+        )
+        
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=f"Google Photos API error: {result.get('error', 'Unknown error')}")
+        
+        return result
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

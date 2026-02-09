@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
-import requests
 from app.models import TokenResponse, LoginURLResponse, ErrorResponse
 from app.utils import (
     get_google_auth_url,
@@ -8,9 +7,13 @@ from app.utils import (
     get_user_info,
     create_jwt_token
 )
+from app.utils.database import token_db
+from app.utils.encryption import token_encryptor
+from app.utils.token_storage import save_user_tokens, delete_user_tokens
+from app.utils.jwt_utils import verify_jwt_token
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
-google_tokens_store = {}
 
 
 @router.get("/login/google", response_model=LoginURLResponse)
@@ -41,12 +44,11 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
 
     email = user_data["email"]
     
-    
+    # Store encrypted tokens in database
     if refresh_token:
-        google_tokens_store[email] = {
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }
+        success = save_user_tokens(email, access_token, refresh_token)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save tokens")
 
     app_jwt = create_jwt_token({
         "email": email,
@@ -57,4 +59,33 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
         access_token=app_jwt,
         token_type="bearer"
     )
+
+
+security = HTTPBearer()
+
+
+@router.delete("/logout")
+async def logout(credentials: HTTPAuthorizationCredentials = security):
+    """Logout user and delete stored tokens"""
+    try:
+        payload = verify_jwt_token(credentials.credentials)
+        
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid or expired JWT token")
+        
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(status_code=401, detail="Email not found in token")
+        
+        # Delete user tokens from database
+        success = delete_user_tokens(email)
+        
+        return {
+            "message": "Successfully logged out",
+            "tokens_deleted": success
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Logout failed: {str(e)}")
 

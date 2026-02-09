@@ -45,9 +45,16 @@ token.json
 token.pickle
 client_secret*.json
 
+# Database
+tokens.db
+*.db
+*.sqlite
+*.sqlite3
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
+access.txt

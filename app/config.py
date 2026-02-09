@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 class Settings:
     
     # Google OAuth
@@ -14,7 +13,10 @@ class Settings:
     # JWT
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRATION_MINUTES: int = 10080  
+    JWT_EXPIRATION_MINUTES: int = 10080
+    
+    # Database
+    DATABASE_PATH: str = os.getenv("DATABASE_PATH", "tokens.db")  
     
     # Google OAuth URLs
     GOOGLE_AUTH_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -22,6 +24,8 @@ class Settings:
     GOOGLE_USERINFO_URL: str = "https://www.googleapis.com/oauth2/v1/userinfo"
     GOOGLE_PHOTOS_BASE = "https://photoslibrary.googleapis.com/v1"
     GOOGLE_DRIVE_API_URL: str = "https://www.googleapis.com/drive/v3/files"
+    GOOGLE_CALENDAR_API_URL: str = "https://www.googleapis.com/calendar/v3"
+    
     
     # OAuth Scopes
     GOOGLE_SCOPES: list = [
@@ -31,7 +35,9 @@ class Settings:
         "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/photoslibrary",
         "https://www.googleapis.com/auth/photoslibrary.appendonly",
-        "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata"
+        "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata",
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/calendar.events"
     
     ]
 

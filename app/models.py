@@ -57,3 +57,9 @@ class ErrorResponse(BaseModel):
     error: str
     details: Optional[dict] = None
 
+
+class CreateMeetRequest(BaseModel):
+    summary: str
+    start_time: Optional[str] = None  # ISO format: "2026-02-10T14:00:00"
+    duration_minutes: int = 60
+    description: Optional[str] = None
