@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
+import requests
 from app.models import TokenResponse, LoginURLResponse, ErrorResponse
 from app.utils import (
     get_google_auth_url,
@@ -15,6 +16,9 @@ google_tokens_store = {}
 @router.get("/login/google", response_model=LoginURLResponse)
 async def login_google():
     auth_data = get_google_auth_url()
+    print(f"\n=== GOOGLE AUTH URL ===")
+    print(f"Full URL: {auth_data['url']}")
+    print(f"======================\n")
     return {"url": auth_data["url"]}
 
 
@@ -22,9 +26,13 @@ async def login_google():
 async def auth_google_callback(code: str, state: Optional[str] = None):
 
     token_data = exchange_code_for_token(code)
-
     if not token_data:
         raise HTTPException(status_code=400, detail="Failed to get access token")
+
+    print(f"\n=== TOKEN DATA ===")
+    print(f"Token response: {token_data}")
+    print(f"Scope in token: {token_data.get('scope', 'NO SCOPE IN RESPONSE')}")
+    print(f"==================\n")
 
     access_token = token_data["access_token"]
     refresh_token = token_data.get("refresh_token")
@@ -35,6 +43,8 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
         raise HTTPException(status_code=400, detail="Failed to fetch user info")
 
     email = user_data["email"]
+    
+    
     if refresh_token:
         google_tokens_store[email] = {
             "access_token": access_token,
@@ -50,3 +60,4 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
         access_token=app_jwt,
         token_type="bearer"
     )
+

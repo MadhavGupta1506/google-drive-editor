@@ -8,17 +8,19 @@ from app.config import settings
 
 def get_google_auth_url() -> Dict[str, str]:
     state = secrets.token_urlsafe(16)
-    encoded_redirect_uri = quote_plus(settings.GOOGLE_REDIRECT_URI) 
-    scopes = "%20".join(settings.GOOGLE_SCOPES)
+    encoded_redirect_uri = quote_plus(settings.GOOGLE_REDIRECT_URI)
+    # Properly encode scopes - each scope is URL encoded, then joined with space (%20)
+    encoded_scopes = "%20".join([quote_plus(scope) for scope in settings.GOOGLE_SCOPES])
     
     google_auth_url = (
         f"{settings.GOOGLE_AUTH_URL}"
         f"?response_type=code"
         f"&client_id={settings.GOOGLE_CLIENT_ID}"
         f"&redirect_uri={encoded_redirect_uri}"
-        f"&scope={scopes}"
+        f"&scope={encoded_scopes}"
         f"&access_type=offline"
         f"&prompt=consent"
+        f"&include_granted_scopes=true"
         f"&state={state}"
     )
     
