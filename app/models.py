@@ -63,3 +63,9 @@ class CreateMeetRequest(BaseModel):
     start_time: Optional[str] = None  # ISO format: "2026-02-10T14:00:00"
     duration_minutes: int = 60
     description: Optional[str] = None
+
+class CreateEventRequest(BaseModel):
+    summary: str
+    start_time: Optional[str] = None  # ISO format: "2026-02-10T14:00:00" - defaults to current time
+    duration_minutes: int = 60
+    description: Optional[str] = None

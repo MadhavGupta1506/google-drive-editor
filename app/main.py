@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.security import HTTPBearer
-from app.routes import auth_router, google_drive_router,google_photos_router, google_meet_router
+from app.routes import auth_router, google_drive_router,google_photos_router, google_calendar_router
 
 security = HTTPBearer()
 
@@ -17,7 +17,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(google_drive_router)
 app.include_router(google_photos_router)
-app.include_router(google_meet_router)
+app.include_router(google_calendar_router)
 
 
 @app.get("/")
