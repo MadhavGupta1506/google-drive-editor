@@ -106,3 +106,43 @@ async def get_photos(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=500, detail=f"Missing token data: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+class CreateAlbumRequest(BaseModel):
+    album_title: str
+
+
+@router.post("/albums")
+async def create_new_album(
+    album_request: CreateAlbumRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    try:
+        payload = verify_jwt_token(credentials.credentials)
+        
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid or expired JWT token")
+        
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(status_code=401, detail="Email not found in token")
+        
+        if email not in google_tokens_store:
+            raise HTTPException(status_code=403, detail="Google Photos not linked. Please authenticate first.")
+        
+        access_token = google_tokens_store[email]["access_token"]
+        refresh_token = google_tokens_store[email]["refresh_token"]
+        
+        album_data = create_album(access_token, album_request.album_title, refresh_token, email)
+        
+        if "error" in album_data:
+            raise HTTPException(status_code=500, detail=f"Google Photos API error: {album_data.get('error', 'Unknown error')}")
+        
+        return album_data
+        
+    except HTTPException:
+        raise
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing token data: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

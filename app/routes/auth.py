@@ -16,9 +16,6 @@ google_tokens_store = {}
 @router.get("/login/google", response_model=LoginURLResponse)
 async def login_google():
     auth_data = get_google_auth_url()
-    print(f"\n=== GOOGLE AUTH URL ===")
-    print(f"Full URL: {auth_data['url']}")
-    print(f"======================\n")
     return {"url": auth_data["url"]}
 
 
