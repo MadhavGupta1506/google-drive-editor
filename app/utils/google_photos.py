@@ -11,7 +11,7 @@ def list_google_photos(access_token: str,page_size: int = 10) -> dict:
             timeout=10,
             params={"pageSize": page_size}
         )
-        print(access_token)
+
         return response.json()
     except requests.RequestException as e:
         return {"error": str(e)}
@@ -25,8 +25,7 @@ def list_albums(access_token: str,page_size: int = 10) -> dict:
             params={"pageSize": page_size},
             timeout=10  
         )
-        print(f"Albums API Response Status: {response.status_code}")
-        print(f"Albums API Response: {response.text[:500]}")
+
         return response.json()
     except requests.RequestException as e:
         return {"error": str(e)}

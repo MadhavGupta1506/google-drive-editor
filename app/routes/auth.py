@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse
 from typing import Optional
 from app.models import TokenResponse, LoginURLResponse, ErrorResponse
 from app.utils import (
@@ -29,10 +30,6 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
     if not token_data:
         raise HTTPException(status_code=400, detail="Failed to get access token")
 
-    print(f"\n=== TOKEN DATA ===")
-    print(f"Token response: {token_data}")
-    print(f"Scope in token: {token_data.get('scope', 'NO SCOPE IN RESPONSE')}")
-    print(f"==================\n")
 
     access_token = token_data["access_token"]
     refresh_token = token_data.get("refresh_token")
@@ -55,10 +52,8 @@ async def auth_google_callback(code: str, state: Optional[str] = None):
         "provider": "google"
     })
 
-    return TokenResponse(
-        access_token=app_jwt,
-        token_type="bearer"
-    )
+    # Redirect to frontend with JWT token
+    return RedirectResponse(url=f"/?token={app_jwt}")
 
 
 security = HTTPBearer()

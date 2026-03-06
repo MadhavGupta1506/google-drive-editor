@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Suite Manager</title>
+  <meta name="description" content="Manage your Google Drive, Photos, and Calendar in one place." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/frontend/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Splash loader shown while JS initializes -->
+    <div id="splash" class="splash">
+      <div class="splash-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="url(#grad)"/>
+            <defs>
+              <linearGradient id="grad" x1="0" y1="0" x2="48" y2="48">
+                <stop offset="0%" stop-color="#4285f4"/>
+                <stop offset="100%" stop-color="#34a853"/>
+              </linearGradient>
+            </defs>
+            <path d="M24 12L34 30H14L24 12Z" fill="white" opacity="0.9"/>
+            <circle cx="24" cy="34" r="5" fill="white" opacity="0.7"/>
+          </svg>
+        </div>
+        <span class="splash-title">Google Suite Manager</span>
+      </div>
+      <div class="splash-spinner"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/frontend/app.js"></script>
+</body>
+</html>

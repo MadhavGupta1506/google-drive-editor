@@ -34,7 +34,6 @@ async def get_albums(credentials: HTTPAuthorizationCredentials = Depends(securit
         access_token = tokens["access_token"]
         refresh_token = tokens["refresh_token"]
         # Call Google Photos API
-        print(f"Using access token: {access_token}")  
         albums_data = list_albums(access_token)
         
         # Handle expired token - refresh and retry
